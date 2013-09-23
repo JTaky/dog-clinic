@@ -1,0 +1,62 @@
+defaultTasks 'cleanDist', 'test', 'pack'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+//project coordinates
+version = 1.0
+
+ext {
+	tomcatVersion = '7.0.42'
+}
+
+repositories {
+	mavenCentral();
+}
+
+task cleanDist(dependsOn: clean) << {
+	delete 'dist'
+}
+
+dependencies {
+	compile 'org.apache.tomcat.embed:tomcat-embed-core:' + tomcatVersion
+	compile 'org.apache.tomcat.embed:tomcat-embed-logging-juli:' + tomcatVersion
+	compile 'org.apache.tomcat.embed:tomcat-embed-jasper:' + tomcatVersion
+
+	compile 'com.google.guava:guava:15.0'
+	compile 'org.apache.commons:commons-lang3:3.1'
+	compile 'com.google.code.gson:gson:2.2.4'
+	compile 'ch.qos.logback:logback-classic:1.0.3'
+	
+	testCompile group: 'junit', name: 'junit', version: '4.+'
+}
+
+jar {
+    manifest {
+        def version = '1.0'
+		def manifestClasspath = configurations.compile.collect { 'lib/'+it.getName() }.join(' ')
+        def mainClass = 'ua.taky.dogclinic.DogClinicEntryPoint'
+        attributes 'Implementation-Title': 'Dog clinic demo',
+            'Implementation-version': '1.0',
+            'Class-Path': manifestClasspath,
+            'Main-Class': mainClass
+    }
+}
+
+task copyDeps(dependsOn: cleanDist) << {
+    copy {
+        from configurations.compile
+        into 'dist/lib'
+    }
+}
+
+task pack(dependsOn: [copyDeps, jar]) << {
+	copy {
+		from jar.archivePath
+		into 'dist'
+	}
+	copy {
+		from 'src/main/webapp'
+		into 'dist/src/main/webapp'
+	}
+}

@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" ></script>
+<title>Clinic</title>
+</head>
+<body>
+<script type="text/javascript" >
+function fillDogs(dogsJsonStr){
+	var dogs = $.parseJSON( dogsJsonStr );
+	for(var i = 0; i < dogs.length; i++){
+		apendDog(dogs[i]);
+	}
+}
+
+function apendDog(dog){
+	//in prod using template engine(e.g. handlebars, mustache e.t.c.) is preferable
+	var tableContent = '<tr>';
+	tableContent += '<td>' + dog.age + '</td>'
+	tableContent += '<td>' + dog.breed + '</td>'
+	tableContent += '</tr>';
+	$('#dogsContent').prepend(tableContent);
+}
+
+function removeLastDog(){
+	$('#dogsContent').children('tr:first').remove();
+}
+
+function addDog(){
+	var dog = {};
+	dog.age = $('#dogAge').val();
+	dog.breed = $('#dogBreed').val();
+	apendDog(dog); //do not think about sorting
+				   //in real life we will have more advanced UI container
+	$.ajax( {
+		url: "/dog",
+		type: "PUT",
+		data: JSON.stringify(dog),
+		contentType: "application/json; charset=utf-8",
+        success: function (response) {
+        	$('#dogAge').val('');
+    		$('#dogBreed').val('');
+        }, error: function (xhr, ajaxOptions, thrownError) {
+      		//notify user about store error
+      		//mark row as unstored, try to store again e.t.c.
+      		//skip in order to eliminate complication in this demo
+      		alert('Cannot store dog'); //it is better to localise msg using some UI mechnism
+      		removeLastDog();
+        }
+	});;
+}
+
+$(document).ready(function (){
+	$.ajax( {
+		url: "/dog",
+		type: "GET",
+	}).done(function(dogs) {
+		fillDogs(dogs);
+	});
+});
+</script>
+<div><h1>Clinic</h1></div>
+<div id="tableDiv" >
+<table border="0">
+<thead>
+<tr><td>Age</td><td>Breed</td></tr>
+</thead>
+<tbody id="dogsContent">
+<tr id="inputDogRow">
+	<td><input id="dogAge" type="text"/></td>
+	<td><input id="dogBreed" type="text"></td>
+</tr>
+<tr>
+	<td></td>
+	<td><input id="btnNewDog" type="button" value="add" onclick="addDog();"></td>
+</tr>
+</tbody>
+</table>
+</div>
+</body>
+</html>
